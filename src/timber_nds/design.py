@@ -1,7 +1,7 @@
 # design.py from timber_nds
 import numpy as np
-import timber_nds.essentials as te
-import timber_nds.calculation as tc
+import timber_nds.essentials as essentials
+import timber_nds.calculation as calculation
 
 
 class WoodElementCalculator:
@@ -27,16 +27,16 @@ class WoodElementCalculator:
 
     def __init__(
             self,
-            tension_factors: te.TensionAdjustmentFactors,
-            bending_factors_yy: te.BendingAdjustmentFactors,
-            bending_factors_zz: te.BendingAdjustmentFactors,
-            shear_factors: te.ShearAdjustmentFactors,
-            compression_factors_yy: te.CompressionAdjustmentFactors,
-            compression_factors_zz: te.CompressionAdjustmentFactors,
-            compression_perp_factors: te.PerpendicularAdjustmentFactors,
-            elastic_modulus_factors: te.ElasticModulusAdjustmentFactors,
-            material_properties: te.WoodMaterial,
-            section_properties: tc.RectangularSectionProperties,
+            tension_factors: essentials.TensionAdjustmentFactors,
+            bending_factors_yy: essentials.BendingAdjustmentFactors,
+            bending_factors_zz: essentials.BendingAdjustmentFactors,
+            shear_factors: essentials.ShearAdjustmentFactors,
+            compression_factors_yy: essentials.CompressionAdjustmentFactors,
+            compression_factors_zz: essentials.CompressionAdjustmentFactors,
+            compression_perp_factors: essentials.PerpendicularAdjustmentFactors,
+            elastic_modulus_factors: essentials.ElasticModulusAdjustmentFactors,
+            material_properties: essentials.WoodMaterial,
+            section_properties: calculation.RectangularSectionProperties,
     ):
 
         self.tension_factors = tension_factors
@@ -154,13 +154,13 @@ class WoodElementCalculator:
         if direction == "yy":
             compression_parallel_strength = (
                 self.material_properties.compression_parallel_strength
-                * self.section_properties.elastic_section_modulus(direction)
+                * self.section_properties.area()
                 * self.calculate_combined_factors()["compression_yy"]
             )
         elif direction == "zz":
             compression_parallel_strength = (
                 self.material_properties.compression_parallel_strength
-                * self.section_properties.elastic_section_modulus(direction)
+                * self.section_properties.area()
                 * self.calculate_combined_factors()["compression_zz"]
             )
         else:
@@ -179,7 +179,69 @@ class WoodElementCalculator:
         """
 
         return (
-            self.material_properties.tension_strength
+            self.material_properties.compression_perpendicular_strength
             * self.section_properties.area()
             * self.calculate_combined_factors()["compression_perp"]
         )
+
+
+class DemandCapacityRatioCalculator:
+    """Calculates demand-capacity ratios for a wood element.
+
+    Args:
+        wood_element_calculator: WoodElementCalculator object.
+        forces: Forces acting on the element (Forces).
+
+    Returns:
+        None
+
+    Assumptions:
+        - Capacity is never zero.
+        - Consistent units for inputs.
+        - Tension > 0, compression < 0.
+    """
+
+    def __init__(self, wood_element_calculator, forces):
+        self.wood_element_calculator = wood_element_calculator
+        self.forces = forces
+
+    def calculate_ratios(self):
+        """Calculates demand-capacity ratios.
+
+        Returns:
+            Dictionary of demand-capacity ratios.
+        """
+
+        ratios = {}
+
+        # Flexo-tension (combined bending and tension)
+        tension_capacity = self.wood_element_calculator.section_tension_strength()
+        bending_capacity_yy = self.wood_element_calculator.section_bending_strength("yy")
+        bending_capacity_zz = self.wood_element_calculator.section_bending_strength("zz")
+
+        if self.forces.axial_force > 0:
+            ratios["flexo_tension"] = (
+                abs(self.forces.axial_force) / tension_capacity if tension_capacity != 0 else np.inf
+            ) + (abs(self.forces.moment_yy) / bending_capacity_yy if bending_capacity_yy != 0 else np.inf) + (
+                abs(self.forces.moment_zz) / bending_capacity_zz if bending_capacity_zz != 0 else np.inf
+            )
+
+        # Flexo-compression (combined bending and compression)
+        compression_capacity = min(
+            self.wood_element_calculator.section_compression_strength("yy"),
+            self.wood_element_calculator.section_compression_strength("zz"),
+        )
+
+        if self.forces.axial_force < 0:
+            ratios["flexo_compression"] = (
+                abs(self.forces.axial_force) / compression_capacity if compression_capacity != 0 else np.inf
+            ) + (abs(self.forces.moment_yy) / bending_capacity_yy if bending_capacity_yy != 0 else np.inf) + (
+                abs(self.forces.moment_zz) / bending_capacity_zz if bending_capacity_zz != 0 else np.inf
+            )
+
+        # Shear
+        shear_capacity = self.wood_element_calculator.section_shear_strength()
+        ratios["shear_y"] = abs(self.forces.shear_y) / shear_capacity if shear_capacity != 0 else np.inf
+        ratios["shear_z"] = abs(self.forces.shear_z) / shear_capacity if shear_capacity != 0 else np.inf
+
+        return ratios

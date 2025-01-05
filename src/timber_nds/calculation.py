@@ -257,3 +257,5 @@ class RectangularSectionProperties:
             The radius of gyration.
         """
         return radius_of_gyration(self.moment_of_inertia(direction), self.area())
+
+

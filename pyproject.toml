@@ -11,4 +11,4 @@ classifiers = ["License :: OSI Approved :: MIT License"]
 dynamic = ["version", "description"]
 
 [project.urls]
-Home = "https://github.com/StructuralPython/timber_nds"
+Home = "https://github.com/ingahnavarro/timber_nds"

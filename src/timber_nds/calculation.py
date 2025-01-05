@@ -1,22 +1,22 @@
+# calculation.py from timber_nds
 import numpy as np
-import timber_nds.src.timber_nds.essentials as essentials
+import timber_nds.essentials as essentials
 
 
 class WeightCalculator:
     """
     Calculates the weight of a wood element considering moisture content.
 
-    Attributes:
-        material (WoodProperties): Properties of the wood material.
-        element (ElementProperties): Properties of the structural element.
+    Args:
+        material: Properties of the wood material (WoodMaterial).
+        section: Properties of the structural section (RectangularSection).
+        element: Properties of the structural element (MemberDefinition).
 
-    Methods:
-        calculate_density_at_moisture_content(moisture_content) -> float:
-            Calculates the density of the wood element considering its moisture content.
-            Units: kg/m^3
-        calculate_weight_at_moisture_content(moisture_content) -> float:
-            Calculates the weight of the wood element considering its moisture content.
-            Units: kg
+    Returns:
+        None
+
+    Assumptions:
+        - The provided material, section and element objects are valid.
     """
 
     def __init__(
@@ -41,7 +41,7 @@ class WeightCalculator:
 
         Assumptions:
             - The moisture content is given as a percentage (e.g., 12.5 for 12.5%).
-            - Density of water is 1000 kg/m^3
+            - Density of water is 1000 kg/m^3.
         """
         if not isinstance(moisture_content, (int, float)):
             raise TypeError("Moisture content must be a number (int or float)")
@@ -118,46 +118,52 @@ def effective_length(k_factor: float, length: float) -> float:
     return k_factor * length
 
 
-def radius_of_gyration(i: float, area: float) -> float:
+def radius_of_gyration(moment_of_inertia: float, area: float) -> float:
     """
     Calculates the radius of gyration for any section.
 
     Args:
-        i: Second moment of area (I).
+        moment_of_inertia: Second moment of area (I).
         area: Area of the section (A).
 
     Returns:
         The radius of gyration.
 
-    Raises:
-        ValueError: If the area is zero.
+    Assumptions:
+         - Area must be a non-zero value.
     """
     if area == 0:
         raise ValueError("Area cannot be zero.")
-    return np.sqrt(i / area)
+    return np.sqrt(moment_of_inertia / area)
 
 
-def polar_moment_of_inertia(i_yy: float, i_zz: float) -> float:
+def polar_moment_of_inertia(moment_of_inertia_yy: float, moment_of_inertia_zz: float) -> float:
     """
     Calculates the polar moment of inertia for any section.
 
     Args:
-        i_yy: Second moment of area about the yy axis (Ix).
-        i_zz: Second moment of area about the zz axis (Iy).
+        moment_of_inertia_yy: Second moment of area about the yy axis (Ix).
+        moment_of_inertia_zz: Second moment of area about the zz axis (Iy).
 
     Returns:
         The polar moment of inertia.
     """
-    return i_yy + i_zz
+    return moment_of_inertia_yy + moment_of_inertia_zz
 
 
 class RectangularSectionProperties:
     """
     Represents properties of a rectangular section.
 
-    Attributes:
+    Args:
         width: Width of the section.
         depth: Depth of the section.
+
+    Returns:
+        None
+
+    Assumptions:
+         - Width and Depth must be positive values.
     """
 
     def __init__(self, width: float, depth: float):
@@ -166,66 +172,73 @@ class RectangularSectionProperties:
 
     def area(self) -> float:
         """
-        Calculates the area.
+        Calculates the area of the rectangular section.
 
         Returns:
-            The area.
+            The area of the section.
         """
         return self.width * self.depth
 
-    def i_yy(self) -> float:
-        """
-        Calculates the second moment of area about the yy axis.
+    def moment_of_inertia(self, direction: str) -> float:
+        """Calculates the moment of inertia.
+
+        Args:
+            direction: Axis direction ("yy" or "zz").
 
         Returns:
-            The second moment of area.
+            Moment of inertia.
         """
-        return (self.width * self.depth**3) / 12
 
-    def i_zz(self) -> float:
-        """
-        Calculates the second moment of area about the zz axis.
+        if direction not in ("yy", "zz"):
+            raise ValueError("Invalid direction. Use 'yy' or 'zz'.")
 
-        Returns:
-            The second moment of area.
-        """
-        return (self.depth * self.width**3) / 12
+        elif direction == "yy":
+            inertia = (self.width * self.depth**3) / 12
 
-    def elastic_section_modulus_yy(self) -> float:
-        """
-        Calculates the elastic section modulus about the yy axis.
+        else:
+            inertia = (self.depth * self.width ** 3) / 12
 
-        Returns:
-            The elastic section modulus.
-        """
-        return (self.width * self.depth**2) / 6
+        return inertia
 
-    def elastic_section_modulus_zz(self) -> float:
-        """
-        Calculates the elastic section modulus about the zz axis.
+    def elastic_section_modulus(self, direction: str = None) -> float:
+        """Calculates the elastic section modulus.
+
+        Args:
+            direction: Axis direction ("yy" or "zz").
 
         Returns:
-            The elastic section modulus.
+            Elastic section modulus.
         """
-        return (self.depth * self.width**2) / 6
 
-    def plastic_section_modulus_yy(self) -> float:
-        """
-        Calculates the plastic section modulus about the yy axis.
+        if direction=="yy":
+            section_modulus = (self.width * self.depth**2) / 6
+
+        elif direction=="zz":
+            section_modulus = (self.depth * self.width ** 2) / 6
+
+        else:
+
+            raise ValueError("Invalid direction. Use 'yy' or 'zz'.")
+
+        return section_modulus
+
+    def plastic_section_modulus(self, direction: str) -> float:
+        """Calculates the plastic section modulus.
+
+        Args:
+            direction: Axis direction ("yy" or "zz").
 
         Returns:
-            The plastic section modulus.
+            Plastic section modulus.
         """
-        return (self.width * self.depth**2) / 4
 
-    def plastic_section_modulus_zz(self) -> float:
-        """
-        Calculates the plastic section modulus about the zz axis.
+        if direction not in ("yy", "zz"):
+            raise ValueError("Invalid direction. Use 'yy' or 'zz'.")
 
-        Returns:
-            The plastic section modulus.
-        """
-        return (self.depth * self.width**2) / 4
+        if direction == "yy":
+            return (self.width * self.depth**2) / 4
+        else:  # direction == "zz"
+            return (self.depth * self.width**2) / 4
 
     def polar_moment_of_inertia(self) -> float:
         """
@@ -234,22 +247,13 @@ class RectangularSectionProperties:
         Returns:
             The polar moment of inertia.
         """
-        return self.i_yy() + self.i_zz()
+        return self.moment_of_inertia("yy") + self.moment_of_inertia("zz")
 
-    def radius_of_gyration_yy(self) -> float:
+    def radius_of_gyration(self, direction: str) -> float:
         """
         Calculates the radius of gyration about the yy axis.
 
         Returns:
             The radius of gyration.
         """
-        return radius_of_gyration(self.i_yy(), self.area())
-
-    def radius_of_gyration_zz(self) -> float:
-        """
-        Calculates the radius of gyration about the zz axis.
-
-        Returns:
-            The radius of gyration.
-        """
-        return radius_of_gyration(self.i_zz(), self.area())
+        return radius_of_gyration(self.moment_of_inertia(direction), self.area())

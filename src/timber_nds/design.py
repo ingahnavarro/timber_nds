@@ -169,7 +169,7 @@ class WoodElementCalculator:
         return compression_parallel_strength
 
     def section_compression_perp_strength(self) -> float:
-        """Calculates the adjusted tension strength. ff
+        """Calculates the adjusted tension strength.
 
         Returns:
             Adjusted tension strength of the wood section.

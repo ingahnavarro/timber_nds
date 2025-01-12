@@ -1,4 +1,3 @@
-# design.py from timber_nds
 from typing import Union, List, Dict, Literal
 from tqdm import tqdm
 import pandas as pd

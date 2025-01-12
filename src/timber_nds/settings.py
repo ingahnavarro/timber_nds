@@ -104,7 +104,7 @@ class ElasticModulusAdjustmentFactors:
 
 @dataclass
 class Forces:
-    force: str = "default force"
+    name: str = "default force"
     axial: float = 0.0
     shear_y: float = 0.0
     shear_z: float = 0.0

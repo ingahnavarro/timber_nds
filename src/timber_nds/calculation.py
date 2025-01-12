@@ -1,4 +1,3 @@
-# calculation.py from timber_nds
 import numpy as np
 import pandas as pd
 import timber_nds.settings as settings
@@ -327,7 +326,7 @@ def create_robot_bar_forces_as_objects(df: pd.DataFrame) -> list[Forces]:
         name = "/".join(map(str, index))
 
         forces = Forces(
-            force=name,
+            name=name,
             axial=row['axial'],
             shear_y=row['shear_y'],
             shear_z=row['shear_z'],

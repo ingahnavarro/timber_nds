@@ -18,14 +18,14 @@ class WoodMaterial:
 @dataclass
 class RectangularSection:
     name: str = "Default Section"
-    depth: float = 200.0
-    width: float = 100.0
+    depth: float = 15.0
+    width: float = 10.0
 
 
 @dataclass
 class MemberDefinition:
     name: str = "Default Member"
-    length: float = 3000.0
+    length: float = 300.
     effective_length_factor_yy: float = 1.0
     effective_length_factor_zz: float = 1.0
 
@@ -104,7 +104,8 @@ class ElasticModulusAdjustmentFactors:
 
 @dataclass
 class Forces:
-    axial_force: float = 0.0
+    name: str = "default force"
+    axial: float = 0.0
     shear_y: float = 0.0
     shear_z: float = 0.0
     moment_xx: float = 0.0

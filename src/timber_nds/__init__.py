@@ -4,11 +4,11 @@ Timber NDS package initialization.
 
 __version__ = "0.1.0"
 
-from . import essentials
+from . import settings
 from . import calculation
 from . import design
 
-from .essentials import (
+from .settings import (
     WoodMaterial,
     RectangularSection,
     MemberDefinition,
@@ -31,7 +31,7 @@ from .design import (
 )
 
 __all__ = [
-    "essentials",
+    "settings",
     "calculation",
     "design",
     "WoodMaterial",

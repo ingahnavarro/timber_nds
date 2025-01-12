@@ -1,6 +1,8 @@
 # calculation.py from timber_nds
 import numpy as np
-import timber_nds.essentials as essentials
+import pandas as pd
+import timber_nds.settings as settings
+from timber_nds.settings import Forces
 
 
 class WeightCalculator:
@@ -21,9 +23,9 @@ class WeightCalculator:
 
     def __init__(
         self,
-        material: essentials.WoodMaterial,
-        section: essentials.RectangularSection,
-        element: essentials.MemberDefinition,
+        material: settings.WoodMaterial,
+        section: settings.RectangularSection,
+        element: settings.MemberDefinition,
     ):
         self.material = material
         self.section = section
@@ -98,10 +100,10 @@ class WeightCalculator:
         if self.section.width < 0 or self.section.depth < 0 or self.element.length < 0:
             raise ValueError("Element dimensions must be non-negative values.")
 
-        volume = self.section.width * self.section.depth * self.element.length
         density = self.calculate_density_at_moisture_content(moisture_content)
-        weight = volume * density
-        return weight
+        print(f'densidad = {density}')
+        print(f'dimensiones={self.section.width}, {self.section.depth} y {self.element.length}')
+        return self.section.width / 100 * self.section.depth / 100 * self.element.length / 100 * density
 
 
 def effective_length(k_factor: float, length: float) -> float:
@@ -210,11 +212,11 @@ class RectangularSectionProperties:
             Elastic section modulus.
         """
 
-        if direction=="yy":
+        if direction == "yy":
             section_modulus = (self.width * self.depth**2) / 6
 
-        elif direction=="zz":
-            section_modulus = (self.depth * self.width ** 2) / 6
+        elif direction == "zz":
+            section_modulus = (self.depth * self.width**2) / 6
 
         else:
 
@@ -258,4 +260,79 @@ class RectangularSectionProperties:
         """
         return radius_of_gyration(self.moment_of_inertia(direction), self.area())
 
+def import_robot_bar_forces(filepath: str) -> pd.DataFrame:
+    """
+    Creates a Pandas DataFrame from Robot Structural Analysis force export.
 
+    Args:
+        filepath: Path to the CSV file.
+
+    Returns:
+        A Pandas DataFrame with multi-indexed rows.
+
+    Assumptions:
+        - The CSV file follows the specified format.
+    """
+
+    df = pd.read_csv(filepath, sep=";", decimal=",", thousands=".", header=0)
+
+    first_column_name = df.columns[0]
+    df_split = df[first_column_name].str.split(expand=True)
+
+    if len(df_split.columns) < 4:
+        raise ValueError("The first column does not have enough parts to form Member, Node, Case, and Mode.")
+
+    df_split.columns = ["Member", "Node", "Case", "Mode"] + [f"Extra_Part_{i}" for i in range(1, len(df_split.columns) - 3)]
+
+    df_split = df_split.iloc[:, :4]
+
+    df = pd.concat([df_split, df.drop(columns=[first_column_name])], axis=1)
+    print(f'first_column_name {first_column_name}')
+
+    df.rename(columns={
+        "FX (kgf)": "axial",
+        "FY (kgf)": "shear_y",
+        "FZ (kgf)": "shear_z",
+        "MX (kgfcm)": "torque",
+        "MY (kgfcm)": "moment_yy",
+        "MZ (kgfcm)": "moment_zz",
+        "Length (m)": "length"
+    }, inplace=True)
+
+    df = df.set_index(["Member", "Node", "Case", "Mode"])
+    return df
+
+
+def create_robot_bar_forces_as_objects(df: pd.DataFrame) -> list[Forces]:
+    """
+    Creates a list of Forces objects from a Pandas DataFrame.
+
+    Args:
+        df: DataFrame containing force and moment data.
+            Requires columns 'axial', 'shear_y', 'shear_z', 'torque', 'moment_yy', 'moment_zz'.
+            The index levels are concatenated to create the 'name' attribute.
+
+    Returns:
+        A list of Forces objects.
+
+    Assumptions:
+        - The input DataFrame has the required columns.
+        - All values in the DataFrame are numeric.
+        - No missing data needs to be handled
+    """
+
+    forces_list = []
+    for index, row in df.iterrows():
+        name = "/".join(map(str, index))
+
+        forces = Forces(
+            name=name,
+            axial=row['axial'],
+            shear_y=row['shear_y'],
+            shear_z=row['shear_z'],
+            moment_xx=row['torque'],
+            moment_yy=row['moment_yy'],
+            moment_zz=row['moment_zz'],
+        )
+        forces_list.append(forces)
+    return forces_list

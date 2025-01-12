@@ -260,6 +260,7 @@ class RectangularSectionProperties:
         """
         return radius_of_gyration(self.moment_of_inertia(direction), self.area())
 
+
 def import_robot_bar_forces(filepath: str) -> pd.DataFrame:
     """
     Creates a Pandas DataFrame from Robot Structural Analysis force export.
@@ -326,7 +327,7 @@ def create_robot_bar_forces_as_objects(df: pd.DataFrame) -> list[Forces]:
         name = "/".join(map(str, index))
 
         forces = Forces(
-            name=name,
+            force=name,
             axial=row['axial'],
             shear_y=row['shear_y'],
             shear_z=row['shear_z'],

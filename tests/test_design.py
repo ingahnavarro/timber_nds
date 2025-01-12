@@ -70,7 +70,7 @@ def sample_element():
 def sample_forces():
     return Forces(
         name="Test Forces",
-        axial_force=100.0,  # kgf
+        axial=100.0,  # kgf
         shear_y=50.0,  # kgf
         shear_z=30.0,  # kgf
         moment_xx=10.0,  # kgf*cm
@@ -82,7 +82,7 @@ def sample_forces():
 @pytest.fixture
 def sample_forces_no_name():
     return Forces(
-        axial_force=100.0,  # kgf
+        axial=100.0,  # kgf
         shear_y=50.0,  # kgf
         shear_z=30.0,  # kgf
         moment_xx=10.0,  # kgf*cm

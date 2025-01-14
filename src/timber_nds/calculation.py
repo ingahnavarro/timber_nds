@@ -261,6 +261,10 @@ class RectangularSectionProperties :
         return radius_of_gyration(self.moment_of_inertia(direction), self.area())
 
 
+import pandas as pd
+import io
+
+
 def import_robot_bar_forces(filepath: str) -> pd.DataFrame :
     """
     Creates a Pandas DataFrame from Robot Structural Analysis force export.
@@ -274,38 +278,59 @@ def import_robot_bar_forces(filepath: str) -> pd.DataFrame :
     Assumptions:
         - The CSV file follows the specified format.
     """
-    try :
-        df = pd.read_csv(filepath, sep=";", decimal=",", thousands=".", header=0, encoding='utf-8-sig')
-    except UnicodeDecodeError :
-        df = pd.read_csv(filepath, sep=";", decimal=",", thousands=".", header=0, encoding='latin1')
 
-    first_column_name = df.columns[0]
-    df_split = df[first_column_name].str.split(expand=True)
+    encodings_to_try = ['utf-8-sig', 'latin1']
 
-    if len(df_split.columns) < 4 :
-        raise ValueError("The first column does not have enough parts to form Member, Node, Case, and Mode.")
+    for encoding in encodings_to_try :
+        try :
+            with open(filepath, 'r', encoding=encoding) as file :
+                content = file.read()
 
-    df_split.columns = ["Member", "Node", "Case", "Mode"] + [f"Extra_Part_{i}" for i in
-                                                             range(1, len(df_split.columns) - 3)]
+            print(f"File successfully read with encoding: {encoding}")
+            df = pd.read_csv(io.StringIO(content), sep=";", decimal=",", thousands=".", header=0)
 
-    df_split = df_split.iloc[:, :4]
+            first_column_name = df.columns[0]
 
-    df = pd.concat([df_split, df.drop(columns=[first_column_name])], axis=1)
-    print(f'first_column_name {first_column_name}')
+            # Split the first column by slashes
+            df_split = df[first_column_name].str.split('/', expand=True)
 
-    df.rename(columns={
-        "FX (kgf)" : "axial",
-        "FY (kgf)" : "shear_y",
-        "FZ (kgf)" : "shear_z",
-        "MX (kgfcm)" : "torque",
-        "MY (kgfcm)" : "moment_yy",
-        "MZ (kgfcm)" : "moment_zz",
-        "Length (m)" : "length"
-    }, inplace=True)
+            # Process parts into index columns.
+            num_parts = df_split.shape[1]
+            if num_parts < 3 :
+                raise ValueError(
+                    "The first column does not have at least 3 parts to form Member, Node, Case, and Mode.")
 
-    df = df.set_index(["Member", "Node", "Case", "Mode"])
-    return df
+            df['Member'] = df_split[0].str.strip()
+            df['Node'] = df_split[1].str.strip()
+            df['Case'] = df_split[2].str.strip()
+            df['Mode'] = df_split[3].str.strip() if num_parts > 3 else ""
 
+            df.drop(columns=[first_column_name], inplace=True)
+
+            df.rename(columns={
+                "FX (kgf)" : "axial",
+                "FY (kgf)" : "shear_y",
+                "FZ (kgf)" : "shear_z",
+                "MX (kgfcm)" : "torque",
+                "MY (kgfcm)" : "moment_yy",
+                "MZ (kgfcm)" : "moment_zz",
+                "Length (m)" : "length"
+            }, inplace=True)
+
+            df = df.set_index(["Member", "Node", "Case", "Mode"])
+
+            return df
+        except UnicodeDecodeError as e :
+            print(f"UnicodeDecodeError with encoding: {encoding}: {e}")
+            continue
+        except ValueError as e :
+            print(f"ValueError: {e}")
+            continue
+        except Exception as e :
+            print(f"An error occurred with encoding {encoding}: {e}")
+            continue
+
+    raise UnicodeDecodeError(f"Unable to decode file with any of the tried encodings: {encodings_to_try}")
 
 def create_robot_bar_forces_as_objects(df: pd.DataFrame) -> list[Forces] :
     """

@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+
 import timber_nds.settings as settings
 from timber_nds.settings import Forces
 
@@ -17,7 +18,7 @@ class WeightCalculator:
         None
 
     Assumptions:
-        - The provided material, section and element objects are valid.
+        - The provided material, section, and element objects are valid.
     """
 
     def __init__(
@@ -53,28 +54,28 @@ class WeightCalculator:
 
         if moisture_content <= self.material.fibre_saturation_point:
             density_at_moisture = (
-                self.material.specific_gravity
-                * 1000
-                * ((moisture_content / 100) + 1)
-                / (
-                    (self.material.fibre_saturation_point / 100)
-                    * self.material.specific_gravity
-                    + 1
-                )
+                    self.material.specific_gravity
+                    * 1000
+                    * ((moisture_content / 100) + 1)
+                    / (
+                            (self.material.fibre_saturation_point / 100)
+                            * self.material.specific_gravity
+                            + 1
+                    )
             )
         else:
             density_at_moisture = (
-                self.material.specific_gravity
-                * 1000
-                * (
-                    (self.material.fibre_saturation_point / 100)
-                    + 1
-                )
-                / (
-                    (self.material.fibre_saturation_point / 100)
-                    * self.material.specific_gravity
-                    + 1
-                )
+                    self.material.specific_gravity
+                    * 1000
+                    * (
+                            (self.material.fibre_saturation_point / 100)
+                            + 1
+                    )
+                    / (
+                            (self.material.fibre_saturation_point / 100)
+                            * self.material.specific_gravity
+                            + 1
+                    )
             )
         return density_at_moisture
 
@@ -100,12 +101,12 @@ class WeightCalculator:
             raise ValueError("Element dimensions must be non-negative values.")
 
         density = self.calculate_density_at_moisture_content(moisture_content)
-        print(f'densidad = {density}')
-        print(f'dimensiones={self.section.width}, {self.section.depth} y {self.element.length}')
+        print(f'density = {density}')
+        print(f'dimensions={self.section.width}, {self.section.depth} and {self.element.length}')
         return self.section.width / 100 * self.section.depth / 100 * self.element.length / 100 * density
 
 
-def effective_length(k_factor: float, length: float) -> float:
+def effective_length(k_factor: float, length: float) -> float :
     """
     Calculates the effective length of a member.
 
@@ -119,7 +120,7 @@ def effective_length(k_factor: float, length: float) -> float:
     return k_factor * length
 
 
-def radius_of_gyration(moment_of_inertia: float, area: float) -> float:
+def radius_of_gyration(moment_of_inertia: float, area: float) -> float :
     """
     Calculates the radius of gyration for any section.
 
@@ -133,12 +134,12 @@ def radius_of_gyration(moment_of_inertia: float, area: float) -> float:
     Assumptions:
          - Area must be a non-zero value.
     """
-    if area == 0:
+    if area == 0 :
         raise ValueError("Area cannot be zero.")
     return np.sqrt(moment_of_inertia / area)
 
 
-def polar_moment_of_inertia(moment_of_inertia_yy: float, moment_of_inertia_zz: float) -> float:
+def polar_moment_of_inertia(moment_of_inertia_yy: float, moment_of_inertia_zz: float) -> float :
     """
     Calculates the polar moment of inertia for any section.
 
@@ -152,7 +153,7 @@ def polar_moment_of_inertia(moment_of_inertia_yy: float, moment_of_inertia_zz: f
     return moment_of_inertia_yy + moment_of_inertia_zz
 
 
-class RectangularSectionProperties:
+class RectangularSectionProperties :
     """
     Represents properties of a rectangular section.
 
@@ -167,11 +168,11 @@ class RectangularSectionProperties:
          - Width and Depth must be positive values.
     """
 
-    def __init__(self, width: float, depth: float):
+    def __init__(self, width: float, depth: float) :
         self.width = width
         self.depth = depth
 
-    def area(self) -> float:
+    def area(self) -> float :
         """
         Calculates the area of the rectangular section.
 
@@ -180,7 +181,7 @@ class RectangularSectionProperties:
         """
         return self.width * self.depth
 
-    def moment_of_inertia(self, direction: str) -> float:
+    def moment_of_inertia(self, direction: str) -> float :
         """Calculates the moment of inertia.
 
         Args:
@@ -190,18 +191,18 @@ class RectangularSectionProperties:
             Moment of inertia.
         """
 
-        if direction not in ("yy", "zz"):
+        if direction not in ("yy", "zz") :
             raise ValueError("Invalid direction. Use 'yy' or 'zz'.")
 
-        elif direction == "yy":
-            inertia = (self.width * self.depth**3) / 12
+        elif direction == "yy" :
+            inertia = (self.width * self.depth ** 3) / 12
 
-        else:
+        else :
             inertia = (self.depth * self.width ** 3) / 12
 
         return inertia
 
-    def elastic_section_modulus(self, direction: str = None) -> float:
+    def elastic_section_modulus(self, direction: str = None) -> float :
         """Calculates the elastic section modulus.
 
         Args:
@@ -211,19 +212,19 @@ class RectangularSectionProperties:
             Elastic section modulus.
         """
 
-        if direction == "yy":
-            section_modulus = (self.width * self.depth**2) / 6
+        if direction == "yy" :
+            section_modulus = (self.width * self.depth ** 2) / 6
 
-        elif direction == "zz":
-            section_modulus = (self.depth * self.width**2) / 6
+        elif direction == "zz" :
+            section_modulus = (self.depth * self.width ** 2) / 6
 
-        else:
+        else :
 
             raise ValueError("Invalid direction. Use 'yy' or 'zz'.")
 
         return section_modulus
 
-    def plastic_section_modulus(self, direction: str) -> float:
+    def plastic_section_modulus(self, direction: str) -> float :
         """Calculates the plastic section modulus.
 
         Args:
@@ -233,15 +234,15 @@ class RectangularSectionProperties:
             Plastic section modulus.
         """
 
-        if direction not in ("yy", "zz"):
+        if direction not in ("yy", "zz") :
             raise ValueError("Invalid direction. Use 'yy' or 'zz'.")
 
-        if direction == "yy":
-            return (self.width * self.depth**2) / 4
-        else:  # direction == "zz"
-            return (self.depth * self.width**2) / 4
+        if direction == "yy" :
+            return (self.width * self.depth ** 2) / 4
+        else :  # direction == "zz"
+            return (self.depth * self.width ** 2) / 4
 
-    def polar_moment_of_inertia(self) -> float:
+    def polar_moment_of_inertia(self) -> float :
         """
         Calculates the polar moment of inertia.
 
@@ -250,7 +251,7 @@ class RectangularSectionProperties:
         """
         return self.moment_of_inertia("yy") + self.moment_of_inertia("zz")
 
-    def radius_of_gyration(self, direction: str) -> float:
+    def radius_of_gyration(self, direction: str) -> float :
         """
         Calculates the radius of gyration about the yy axis.
 
@@ -260,9 +261,7 @@ class RectangularSectionProperties:
         return radius_of_gyration(self.moment_of_inertia(direction), self.area())
 
 
-import pandas as pd
-
-def import_robot_bar_forces(filepath: str) -> pd.DataFrame:
+def import_robot_bar_forces(filepath: str) -> pd.DataFrame :
     """
     Creates a Pandas DataFrame from Robot Structural Analysis force export.
 
@@ -275,19 +274,19 @@ def import_robot_bar_forces(filepath: str) -> pd.DataFrame:
     Assumptions:
         - The CSV file follows the specified format.
     """
-    try:
+    try :
         df = pd.read_csv(filepath, sep=";", decimal=",", thousands=".", header=0, encoding='utf-8-sig')
-    except UnicodeDecodeError:
+    except UnicodeDecodeError :
         df = pd.read_csv(filepath, sep=";", decimal=",", thousands=".", header=0, encoding='latin1')
-
 
     first_column_name = df.columns[0]
     df_split = df[first_column_name].str.split(expand=True)
 
-    if len(df_split.columns) < 4:
+    if len(df_split.columns) < 4 :
         raise ValueError("The first column does not have enough parts to form Member, Node, Case, and Mode.")
 
-    df_split.columns = ["Member", "Node", "Case", "Mode"] + [f"Extra_Part_{i}" for i in range(1, len(df_split.columns) - 3)]
+    df_split.columns = ["Member", "Node", "Case", "Mode"] + [f"Extra_Part_{i}" for i in
+                                                             range(1, len(df_split.columns) - 3)]
 
     df_split = df_split.iloc[:, :4]
 
@@ -295,20 +294,20 @@ def import_robot_bar_forces(filepath: str) -> pd.DataFrame:
     print(f'first_column_name {first_column_name}')
 
     df.rename(columns={
-        "FX (kgf)": "axial",
-        "FY (kgf)": "shear_y",
-        "FZ (kgf)": "shear_z",
-        "MX (kgfcm)": "torque",
-        "MY (kgfcm)": "moment_yy",
-        "MZ (kgfcm)": "moment_zz",
-        "Length (m)": "length"
+        "FX (kgf)" : "axial",
+        "FY (kgf)" : "shear_y",
+        "FZ (kgf)" : "shear_z",
+        "MX (kgfcm)" : "torque",
+        "MY (kgfcm)" : "moment_yy",
+        "MZ (kgfcm)" : "moment_zz",
+        "Length (m)" : "length"
     }, inplace=True)
 
     df = df.set_index(["Member", "Node", "Case", "Mode"])
     return df
 
 
-def create_robot_bar_forces_as_objects(df: pd.DataFrame) -> list[Forces]:
+def create_robot_bar_forces_as_objects(df: pd.DataFrame) -> list[Forces] :
     """
     Creates a list of Forces objects from a Pandas DataFrame.
 
@@ -327,7 +326,7 @@ def create_robot_bar_forces_as_objects(df: pd.DataFrame) -> list[Forces]:
     """
 
     forces_list = []
-    for index, row in df.iterrows():
+    for index, row in df.iterrows() :
         name = "/".join(map(str, index))
 
         forces = Forces(

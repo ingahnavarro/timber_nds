@@ -260,6 +260,8 @@ class RectangularSectionProperties:
         return radius_of_gyration(self.moment_of_inertia(direction), self.area())
 
 
+import pandas as pd
+
 def import_robot_bar_forces(filepath: str) -> pd.DataFrame:
     """
     Creates a Pandas DataFrame from Robot Structural Analysis force export.
@@ -273,8 +275,11 @@ def import_robot_bar_forces(filepath: str) -> pd.DataFrame:
     Assumptions:
         - The CSV file follows the specified format.
     """
+    try:
+        df = pd.read_csv(filepath, sep=";", decimal=",", thousands=".", header=0, encoding='utf-8-sig')
+    except UnicodeDecodeError:
+        df = pd.read_csv(filepath, sep=";", decimal=",", thousands=".", header=0, encoding='latin1')
 
-    df = pd.read_csv(filepath, sep=";", decimal=",", thousands=".", header=0)
 
     first_column_name = df.columns[0]
     df_split = df[first_column_name].str.split(expand=True)

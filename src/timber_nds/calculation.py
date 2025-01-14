@@ -354,7 +354,7 @@ def create_robot_bar_forces_as_objects(df: pd.DataFrame) -> list[Forces] :
 
         forces = Forces(
             name=name,
-            axial=row['axial'] * -1,
+            axial= -1 * row['axial'],
             shear_y=row['shear_y'],
             shear_z=row['shear_z'],
             moment_xx=row['torque'],

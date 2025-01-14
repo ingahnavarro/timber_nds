@@ -314,6 +314,8 @@ def import_robot_bar_forces(filepath: str) -> pd.DataFrame :
                 "Length (m)" : "length"
             }, inplace=True)
 
+            df['axial'] = -df['axial']
+            
             df = df.set_index(["Member", "Node", "Case", "Mode"])
 
             return df
@@ -354,7 +356,7 @@ def create_robot_bar_forces_as_objects(df: pd.DataFrame) -> list[Forces] :
 
         forces = Forces(
             name=name,
-            axial=row['axial'] * -1,
+            axial=row['axial'],
             shear_y=row['shear_y'],
             shear_z=row['shear_z'],
             moment_xx=row['torque'],

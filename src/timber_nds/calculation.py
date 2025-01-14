@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import io
 
 import timber_nds.settings as settings
 from timber_nds.settings import Forces
@@ -261,10 +262,6 @@ class RectangularSectionProperties :
         return radius_of_gyration(self.moment_of_inertia(direction), self.area())
 
 
-import pandas as pd
-import io
-
-
 def import_robot_bar_forces(filepath: str) -> pd.DataFrame :
     """
     Creates a Pandas DataFrame from Robot Structural Analysis force export.
@@ -332,6 +329,7 @@ def import_robot_bar_forces(filepath: str) -> pd.DataFrame :
 
     raise UnicodeDecodeError(f"Unable to decode file with any of the tried encodings: {encodings_to_try}")
 
+
 def create_robot_bar_forces_as_objects(df: pd.DataFrame) -> list[Forces] :
     """
     Creates a list of Forces objects from a Pandas DataFrame.
@@ -356,7 +354,7 @@ def create_robot_bar_forces_as_objects(df: pd.DataFrame) -> list[Forces] :
 
         forces = Forces(
             name=name,
-            axial=row['axial'],
+            axial=row['axial'] * -1,
             shear_y=row['shear_y'],
             shear_z=row['shear_z'],
             moment_xx=row['torque'],

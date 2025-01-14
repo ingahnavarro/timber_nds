@@ -267,14 +267,14 @@ def calculate_dcr_for_wood_elements(
 
     # tension
     tension_capacity = wood_calculator.tension_strength()
-    axial_tension_load = abs(forces.axial) if forces.axial < 0 else 0
+    axial_tension_load = abs(forces.axial) if forces.axial > 0 else 0
     dcr_results["axial tension"] = abs(axial_tension_load)
 
     # compression
     compression_capacity_yy = wood_calculator.compression_strength("yy")
     compression_capacity_zz = wood_calculator.compression_strength("zz")
     compression_capacity = max(compression_capacity_yy, compression_capacity_zz)
-    axial_compression_load = abs(forces.axial) if forces.axial >= 0 else 0
+    axial_compression_load = abs(forces.axial) if forces.axial <= 0 else 0
     dcr_results["axial compression"] = axial_compression_load
 
     # bending

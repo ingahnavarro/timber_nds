@@ -315,7 +315,7 @@ def import_robot_bar_forces(filepath: str) -> pd.DataFrame :
             }, inplace=True)
 
             df['axial'] = -df['axial']
-            
+
             df = df.set_index(["Member", "Node", "Case", "Mode"])
 
             return df

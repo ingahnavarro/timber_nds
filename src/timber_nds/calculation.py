@@ -6,7 +6,7 @@ import timber_nds.settings as settings
 from timber_nds.settings import Forces
 
 
-class WeightCalculator:
+class WeightCalculator :
     """
     Calculates the weight of a wood element considering moisture content.
 
@@ -23,16 +23,16 @@ class WeightCalculator:
     """
 
     def __init__(
-        self,
-        material: settings.WoodMaterial,
-        section: settings.RectangularSection,
-        element: settings.MemberDefinition,
-    ):
+            self,
+            material: settings.WoodMaterial,
+            section: settings.RectangularSection,
+            element: settings.MemberDefinition,
+    ) :
         self.material = material
         self.section = section
         self.element = element
 
-    def calculate_density_at_moisture_content(self, moisture_content: float) -> float:
+    def calculate_density_at_moisture_content(self, moisture_content: float) -> float :
         """
         Calculates the density of the wood element at a given moisture content.
 
@@ -46,14 +46,14 @@ class WeightCalculator:
             - The moisture content is given as a percentage (e.g., 12.5 for 12.5%).
             - Density of water is 1000 kg/m^3.
         """
-        if not isinstance(moisture_content, (int, float)):
+        if not isinstance(moisture_content, (int, float)) :
             raise TypeError("Moisture content must be a number (int or float)")
-        if moisture_content < 0:
+        if moisture_content < 0 :
             raise ValueError("Moisture content must be non-negative.")
-        if self.material.fibre_saturation_point < 0:
+        if self.material.fibre_saturation_point < 0 :
             raise ValueError("Fibre saturation point must be non-negative.")
 
-        if moisture_content <= self.material.fibre_saturation_point:
+        if moisture_content <= self.material.fibre_saturation_point :
             density_at_moisture = (
                     self.material.specific_gravity
                     * 1000
@@ -64,7 +64,7 @@ class WeightCalculator:
                             + 1
                     )
             )
-        else:
+        else :
             density_at_moisture = (
                     self.material.specific_gravity
                     * 1000
@@ -80,7 +80,7 @@ class WeightCalculator:
             )
         return density_at_moisture
 
-    def calculate_weight_at_moisture_content(self, moisture_content: float) -> float:
+    def calculate_weight_at_moisture_content(self, moisture_content: float) -> float :
         """
         Calculates the weight of the wood element at a given moisture content.
 
@@ -94,11 +94,11 @@ class WeightCalculator:
            - The provided dimensions are valid (positive).
         """
 
-        if not isinstance(moisture_content, (int, float)):
+        if not isinstance(moisture_content, (int, float)) :
             raise TypeError("Moisture content must be a number (int or float)")
-        if moisture_content < 0:
+        if moisture_content < 0 :
             raise ValueError("Moisture content must be non-negative.")
-        if self.section.width < 0 or self.section.depth < 0 or self.element.length < 0:
+        if self.section.width < 0 or self.section.depth < 0 or self.element.length < 0 :
             raise ValueError("Element dimensions must be non-negative values.")
 
         density = self.calculate_density_at_moisture_content(moisture_content)
@@ -354,7 +354,7 @@ def create_robot_bar_forces_as_objects(df: pd.DataFrame) -> list[Forces] :
 
         forces = Forces(
             name=name,
-            axial= -row['axial'],
+            axial=row['axial'] * -1,
             shear_y=row['shear_y'],
             shear_z=row['shear_z'],
             moment_xx=row['torque'],

@@ -12,7 +12,3 @@ dynamic = ["version", "description"]
 
 [project.urls]
 Home = "https://github.com/ingahnavarro/timber_nds"
-
-[tool.setuptools.packages.find]
-where = ["timber_nds"]
-include = ["timber_nds.*"]

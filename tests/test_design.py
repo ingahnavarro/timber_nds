@@ -26,7 +26,7 @@ def sample_factors():
     shear_factors = ShearAdjustmentFactors(1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
     compression_factors_yy = CompressionAdjustmentFactors(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
     compression_factors_zz = CompressionAdjustmentFactors(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
-    compression_perp_factors = PerpendicularAdjustmentFactors(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
+    compression_perp_factors = PerpendicularAdjustmentFactors(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
     elastic_modulus_factors = ElasticModulusAdjustmentFactors(1.0, 1.0, 1.0, 1.0)
     return (
         tension_factors,
@@ -200,7 +200,7 @@ class TestCalculateDcrForWoodElements:
 
         assert isinstance(dcr_results, dict)
         assert all(isinstance(value, (int, float)) for value in dcr_results.values())
-        assert len(dcr_results) == 15
+        assert len(dcr_results) == 13
 
         with pytest.raises(TypeError, match="'section' must be a RectangularSection instance."):
             calculate_dcr_for_wood_elements(

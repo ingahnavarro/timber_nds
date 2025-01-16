@@ -1,3 +1,2 @@
 recursive-include timber_nds/tests *
 recursive-include timber_nds/tutoriales *
-exclude timber_nds/tests/*

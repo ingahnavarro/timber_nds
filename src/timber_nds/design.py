@@ -617,7 +617,7 @@ def filter_and_export_results(
                     - {"range": {"min": 0.5, "max": 1.5}} for range filtering
                   where "operator" can be "eq", "gt", "lt", "ge", "le" (equal, greater than, less than,
                   greater than or equal to, less than or equal to) and "threshold" is the numerical value
-        output_path: The path to save the filtered results as an Excel file. If not provided, defaults to two directories up, then tests/test_data.
+        output_path: The path to save the filtered results as an Excel file. If not provided, defaults to the directory where the script is running.
         output_filename: The filename to save the filtered results as a Excel file.
             Defaults to "filtered_results.xlsx"
         sort_by: The column to sort the DataFrame by.
@@ -634,7 +634,7 @@ def filter_and_export_results(
           The 'min' and 'max' keys are numeric.
         - The output_filename is a valid name for a xlsx file
         - If output_path is not None it must be a string
-         -The column provided for `sort_by` is present in the DataFrame
+        - The column provided for `sort_by` is present in the DataFrame
 
     """
     if not isinstance(results_df, pd.DataFrame):
@@ -701,12 +701,8 @@ def filter_and_export_results(
         filtered_df = filtered_df.sort_values(by=sort_by, ascending=(sort_order == "asc"))
 
     if output_path is None:
-        # Get the directory where the script is running
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        # Go two directories up
-        default_output_dir = os.path.dirname(os.path.dirname(script_dir))
-        # Add the tests/test_data path
-        output_path = os.path.join(default_output_dir, "tests", "test_data", output_filename)
+        # Use the directory where the script is running
+        output_path = os.path.join(os.getcwd(), output_filename)
     else:
         output_path = os.path.join(output_path, output_filename)
 

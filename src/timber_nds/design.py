@@ -316,16 +316,16 @@ def calculate_dcr_for_wood_elements(
     # dcr for tension + biaxial bending
     dcr_results["bending and compression (dcr)"] = dcr_results["compression (dcr)"]**2 + dcr_results["biaxial bending (dcr)"]
 
-    # # dcr for perpendicular compression
-    # compression_perpendicular_capacity = (
-    #     wood_calculator.compression_perp_strength()
-    # )
-    # dcr_results["compression perpendicular"] = abs(forces.shear_z)
-    # dcr_results["compression perpendicular (dcr)"] = (
-    #     float(max(abs(forces.shear_z), abs(forces.shear_z)) / compression_perpendicular_capacity)
-    #     if compression_perpendicular_capacity != 0
-    #     else 0
-    # )
+    # dcr for perpendicular compression
+    compression_perpendicular_capacity = (
+        wood_calculator.compression_perp_strength()
+    )
+    dcr_results["compression perpendicular"] = abs(forces.shear_z)
+    dcr_results["compression perpendicular (dcr)"] = (
+        float(max(abs(forces.shear_z), abs(forces.shear_z)) / compression_perpendicular_capacity)
+        if compression_perpendicular_capacity != 0
+        else 0
+    )
 
     return dcr_results
 

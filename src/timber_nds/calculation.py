@@ -100,8 +100,7 @@ class WeightCalculator:
             raise ValueError("Element dimensions must be non-negative values.")
 
         density = self.calculate_density_at_moisture_content(moisture_content)
-        print(f'densidad = {density}')
-        print(f'dimensiones={self.section.width}, {self.section.depth} y {self.element.length}')
+
         return self.section.width / 100 * self.section.depth / 100 * self.element.length / 100 * density
 
 

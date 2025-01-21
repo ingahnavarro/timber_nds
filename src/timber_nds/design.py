@@ -211,6 +211,7 @@ def calculate_dcr_for_wood_elements(
     compression_factors_zz: CompressionAdjustmentFactors,
     compression_perp_factors: PerpendicularAdjustmentFactors,
     elastic_modulus_factors: ElasticModulusAdjustmentFactors,
+    support_area: float
 ) -> dict:
     """
     Calculates the Demand Capacity Ratio (DCR) for various limit states of a single wood element.
@@ -318,7 +319,7 @@ def calculate_dcr_for_wood_elements(
 
     # dcr for perpendicular compression
     compression_perpendicular_capacity = (
-        wood_calculator.compression_perp_strength()
+        wood_calculator.compression_perp_strength(support_area)
     )
     dcr_results["compression perpendicular"] = abs(forces.shear_z)
     dcr_results["compression perpendicular (dcr)"] = (
@@ -343,6 +344,7 @@ def check_for_all_forces(
         compression_factors_zz: float,
         compression_perp_factors: float,
         elastic_modulus_factors: float,
+        support_area: float
 ) -> pd.DataFrame:
     """
     Checks wood sections for combined loading DCR and generates a DataFrame of results.
@@ -386,7 +388,8 @@ def check_for_all_forces(
                 tension_factors=tension_factors, bending_factors_yy=bending_factors_yy,
                 bending_factors_zz=bending_factors_zz, shear_factors=shear_factors,
                 compression_factors_yy=compression_factors_yy, compression_factors_zz=compression_factors_zz,
-                compression_perp_factors=compression_perp_factors, elastic_modulus_factors=elastic_modulus_factors
+                compression_perp_factors=compression_perp_factors, elastic_modulus_factors=elastic_modulus_factors,
+                support_area=support_area
             )
 
             try:
@@ -436,6 +439,7 @@ def check_for_all_sections(
         compression_factors_zz: float,
         compression_perp_factors: float,
         elastic_modulus_factors: float,
+        support_area
 ) -> pd.DataFrame:
     """
     Checks wood sections for combined loading DCR and generates a DataFrame of results.
@@ -489,7 +493,8 @@ def check_for_all_sections(
                 compression_factors_yy=compression_factors_yy,
                 compression_factors_zz=compression_factors_zz,
                 compression_perp_factors=compression_perp_factors,
-                elastic_modulus_factors=elastic_modulus_factors
+                elastic_modulus_factors=elastic_modulus_factors,
+                support_area=support_area
             )
 
             all_results.append(dcr_df)
@@ -523,6 +528,7 @@ def check_for_all_elements(
         compression_factors_zz: float,
         compression_perp_factors: float,
         elastic_modulus_factors: float,
+        support_area: float
 ) -> pd.DataFrame:
     """
     Checks wood sections for combined loading DCR and generates a DataFrame of results.
@@ -575,7 +581,8 @@ def check_for_all_elements(
                 compression_factors_yy=compression_factors_yy,
                 compression_factors_zz=compression_factors_zz,
                 compression_perp_factors=compression_perp_factors,
-                elastic_modulus_factors=elastic_modulus_factors
+                elastic_modulus_factors=elastic_modulus_factors,
+                support_area=support_area
             )
 
             all_results.append(dcr_df)

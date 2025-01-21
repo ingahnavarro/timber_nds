@@ -19,7 +19,7 @@ This package has several limitations that users should be aware of:
 
 * **Geometric Modifications:** The package assumes solid members without any holes, notches, or other geometric modifications, except for incisions (if applicable). It is the user's responsibility to consider the effects of any such modifications.
 
-* **Bearing Check:** The shear forces are assumed to be representative of the support reactions. Users should ensure that this is a reasonable assumption for their specific loading and support conditions and apply necessary corrections.
+* **Bearing Check:** The package does not explicitly check for bearing stresses from horizontal forces. Instead, the shear force is assumed to be representative of the support reaction. Users should ensure that this is a reasonable assumption for their specific loading and support conditions and apply necessary corrections.
 
 * **Second-Order Effects:** The package does not consider second-order effects in compression-bending calculations.
 

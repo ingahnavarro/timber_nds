@@ -22,26 +22,6 @@ from timber_nds.calculation import RectangularSectionProperties
 
 
 class WoodElementCalculator:
-    """Calculates the adjusted strength of a wood element.
-
-    Args:
-        tension_factors: Adjustment factors for tension.
-        bending_factors_yy or bending_factors_zz: Adjustment factors for bending around "yy" or "zz".
-        shear_factors: Adjustment factors for shear.
-        compression_factors_yy or compression_factors_zz: Adjustment factors for compression with buckling around "yy" or "zz".
-        compression_perp_factors: Adjustment factors for compression perpendicular to grain.
-        elastic_modulus_factors: Adjustment factors for the modulus of elasticity.
-        material_properties: Wood material properties.
-        section_properties: Wood section properties.
-
-    Returns:
-        None
-
-    Assumptions:
-        All input factors are positive numerical values.
-        Each set of factors (e.g., tension, bending) is consistent in terms of units.
-    """
-
     def __init__(
             self,
             tension_factors: TensionAdjustmentFactors,
@@ -68,12 +48,6 @@ class WoodElementCalculator:
         self.section_properties = section_properties
 
     def calculate_combined_factors(self) -> dict:
-        """
-        Calculates combined factors.
-
-        Returns:
-            Dictionary of combined factors.
-        """
         try:
             tension_combined = np.prod(list(self.tension_factors.__dict__.values()))
             bending_combined_yy = np.prod(list(self.bending_factors_yy.__dict__.values()))
@@ -98,15 +72,6 @@ class WoodElementCalculator:
         }
 
     def tension_strength(self) -> float:
-        """Calculates the adjusted tension strength.
-
-        Returns:
-            Adjusted tension strength of the wood section.
-
-        Assumptions:
-            Connection effects are not included.
-        """
-
         return (
             self.material_properties.tension_strength
             * self.section_properties.area()
@@ -114,17 +79,6 @@ class WoodElementCalculator:
         )
 
     def bending_strength(self, direction: str) -> float:
-        """Calculates the adjusted bending strength.
-
-        Args:
-            direction: Bending direction ("yy" or "zz").
-
-        Returns:
-            Adjusted bending strength.
-
-        Assumptions:
-            Connection effects are not included.
-        """
         if direction == "yy":
             return (
                     self.material_properties.bending_strength
@@ -141,15 +95,6 @@ class WoodElementCalculator:
             raise ValueError("Invalid direction. Use 'yy' or 'zz'.")
 
     def shear_strength(self) -> float:
-        """Calculates the adjusted bending strength about yy axis.
-
-        Returns:
-            Adjusted shear strength.
-
-        Assumptions:
-            Connection effects are not included.
-        """
-
         return (
             2/3
             * self.material_properties.shear_strength
@@ -158,14 +103,6 @@ class WoodElementCalculator:
         )
 
     def compression_strength(self, direction: str) -> float:
-        """Calculates the adjusted tension strength.
-
-        Returns:
-            Adjusted compression strength of the wood section.
-
-        Assumptions:
-            Connection effects are not included.
-        """
         if direction == "yy":
             return (
                 self.material_properties.compression_parallel_strength
@@ -182,15 +119,6 @@ class WoodElementCalculator:
             raise ValueError("Invalid direction. Use 'yy' or 'zz'.")
 
     def compression_perp_strength(self, support_area: float = 1.0) -> float:
-        """Calculates the adjusted tension strength.
-
-        Returns:
-            Adjusted tension strength of the wood section.
-
-        Assumptions:
-            Connection effects are not included.
-        """
-
         return (
             self.material_properties.compression_perpendicular_strength
             * support_area
@@ -213,31 +141,6 @@ def calculate_dcr_for_wood_elements(
     elastic_modulus_factors: ElasticModulusAdjustmentFactors,
     support_area: float
 ) -> dict:
-    """
-    Calculates the Demand Capacity Ratio (DCR) for various limit states of a single wood element.
-
-    Args:
-        section: Rectangular section properties (RectangularSection).
-        element: Member definition (MemberDefinition).
-        forces: Applied forces on the element (Forces).
-        material: Wood material properties (WoodMaterial).
-        tension_factors: Adjustment factors for tension.
-        bending_factors_yy: Adjustment factors for bending around the yy-axis.
-        bending_factors_zz: Adjustment factors for bending around the zz-axis.
-        shear_factors: Adjustment factors for shear.
-        compression_factors_yy: Adjustment factors for compression around the yy-axis.
-        compression_factors_zz: Adjustment factors for compression around the zz-axis.
-        compression_perp_factors: Adjustment factors for compression perpendicular to the grain.
-        elastic_modulus_factors: Adjustment factors for the modulus of elasticity.
-
-    Returns:
-        A dictionary containing the DCR for the element and each limit state.
-
-    Assumptions:
-        - All input data is valid and correctly formatted.
-        - Consistent units are used for all inputs to ensure meaningful results.
-        - MemberDefinition and RectangularSection have "name" attributes.
-    """
     if not isinstance(section, RectangularSection):
         raise TypeError("'section' must be a RectangularSection instance.")
     if not isinstance(element, MemberDefinition):
@@ -266,44 +169,36 @@ def calculate_dcr_for_wood_elements(
 
     dcr_results = {}
 
-    # tension
     tension_capacity = wood_calculator.tension_strength()
     axial_tension_load = (-1 * forces.axial) if forces.axial <= 0 else 0
     dcr_results["axial tension"] = axial_tension_load
-    # dcr for tension
     dcr_results["tension (dcr)"] = float(axial_tension_load / tension_capacity) if tension_capacity != 0 else 0
 
-    # compression
     compression_capacity_yy = wood_calculator.compression_strength("yy")
     compression_capacity_zz = wood_calculator.compression_strength("zz")
     compression_capacity = max(compression_capacity_yy, compression_capacity_zz)
     axial_compression_load = forces.axial if forces.axial > 0 else 0
     dcr_results["axial compression"] = axial_compression_load
-    # dcr for compression
     dcr_results["compression (dcr)"] = (
         float(abs(axial_compression_load) / compression_capacity)
         if compression_capacity != 0
         else 0
     )
 
-    # bending
     bending_capacity_yy = wood_calculator.bending_strength("yy")
     bending_capacity_zz = wood_calculator.bending_strength("zz")
     dcr_results["moment yy"] = abs(forces.moment_yy)
     dcr_results["moment zz"] = abs(forces.moment_zz)
-    # dcr for biaxial bending
     dcr_results["biaxial bending (dcr)"] = (
         float(abs(forces.moment_yy) / bending_capacity_yy) + float(abs(forces.moment_zz) / bending_capacity_zz)
         if bending_capacity_yy or bending_capacity_zz != 0
         else 0
     )
 
-    # shear
     shear_capacity_y = wood_calculator.shear_strength()
     dcr_results["shear y"] = abs(forces.shear_y)
     shear_capacity_z = wood_calculator.shear_strength()
     dcr_results["shear z"] = abs(forces.shear_z)
-    # dcr for shear
     dcr_results["shear y (dcr)"] = (
         float(abs(forces.shear_y) / shear_capacity_y) if shear_capacity_y != 0 else 0
     )
@@ -311,13 +206,10 @@ def calculate_dcr_for_wood_elements(
         float(abs(forces.shear_z) / shear_capacity_z) if shear_capacity_z != 0 else 0
     )
 
-    # dcr for tension + biaxial bending
     dcr_results["bending and tension (dcr)"] = dcr_results["tension (dcr)"] + dcr_results["biaxial bending (dcr)"]
 
-    # dcr for tension + biaxial bending
     dcr_results["bending and compression (dcr)"] = dcr_results["compression (dcr)"]**2 + dcr_results["biaxial bending (dcr)"]
 
-    # dcr for perpendicular compression
     compression_perpendicular_capacity = (
         wood_calculator.compression_perp_strength(support_area)
     )
@@ -346,31 +238,6 @@ def check_for_all_forces(
         elastic_modulus_factors: float,
         support_area: float
 ) -> pd.DataFrame:
-    """
-    Checks wood sections for combined loading DCR and generates a DataFrame of results.
-
-    Args:
-        section: Properties of the structural section (RectangularSection).
-        element: Properties of the structural element (MemberDefinition).
-        list_forces: A list of applied forces (Forces), or a single Forces object.
-        material: Properties of the wood material (WoodMaterial).
-        tension_factors: Combined adjustment factor for tension.
-        bending_factors_yy: Combined adjustment factor for bending about the yy axis.
-        bending_factors_zz: Combined adjustment factor for bending about the zz axis.
-        shear_factors: Combined adjustment factor for shear.
-        compression_factors_yy: Combined adjustment factor for compression about the yy axis.
-        compression_factors_zz: Combined adjustment factor for compression about the zz axis.
-        compression_perp_factors: Combined adjustment factor for compression perpendicular to grain.
-        elastic_modulus_factors: Combined adjustment factor for the modulus of elasticity.
-
-    Returns:
-        A pandas DataFrame containing the DCR results for each force condition.
-
-    Assumptions:
-        - The provided section, element, material and factors are valid and of the correct type.
-        - The forces in 'list_forces' are all valid.
-        - All data is provided in consistent units.
-    """
     if not isinstance(list_forces, list):
         list_forces = [list_forces]
 
@@ -441,32 +308,6 @@ def check_for_all_sections(
         elastic_modulus_factors: float,
         support_area
 ) -> pd.DataFrame:
-    """
-    Checks wood sections for combined loading DCR and generates a DataFrame of results.
-
-    Args:
-        list_sections: Properties of the structural section (RectangularSection).
-        list_elements: Properties of the structural element (MemberDefinition).
-        list_forces: A list of applied forces (Forces), or a single Forces object.
-        material: Properties of the wood material (WoodMaterial).
-        tension_factors: Combined adjustment factor for tension.
-        bending_factors_yy: Combined adjustment factor for bending about the yy axis.
-        bending_factors_zz: Combined adjustment factor for bending about the zz axis.
-        shear_factors: Combined adjustment factor for shear.
-        compression_factors_yy: Combined adjustment factor for compression about the yy axis.
-        compression_factors_zz: Combined adjustment factor for compression about the zz axis.
-        compression_perp_factors: Combined adjustment factor for compression perpendicular to grain.
-        elastic_modulus_factors: Combined adjustment factor for the modulus of elasticity.
-
-    Returns:
-        A pandas DataFrame containing the DCR results for each force condition.
-
-    Assumptions:
-        - The provided section, element, material and factors are valid and of the correct type.
-        - The forces in 'list_forces' are all valid.
-        - All data is provided in consistent units.
-    """
-
     if not isinstance(list_sections, list):
         list_sections = [list_sections]
 
@@ -516,91 +357,95 @@ def check_for_all_sections(
 
 
 def check_for_all_elements(
-        list_sections: Union[List[RectangularSection], RectangularSection],
-        list_elements: Union[List[MemberDefinition], MemberDefinition],
-        list_forces: Union[List[Forces], Forces],
+        list_sections: List[RectangularSection],
+        list_elements: List[MemberDefinition],
+        list_forces: List[Forces],
         material: WoodMaterial,
-        tension_factors: float,
-        bending_factors_yy: float,
-        bending_factors_zz: float,
-        shear_factors: float,
-        compression_factors_yy: float,
-        compression_factors_zz: float,
-        compression_perp_factors: float,
-        elastic_modulus_factors: float,
-        support_area: float
-) -> pd.DataFrame:
-    """
-    Checks wood sections for combined loading DCR and generates a DataFrame of results.
-
-    Args:
-        list_sections: Properties of the structural section (RectangularSection).
-        list_elements: Properties of the structural element (MemberDefinition).
-        list_forces: A list of applied forces (Forces), or a single Forces object.
-        material: Properties of the wood material (WoodMaterial).
-        tension_factors: Combined adjustment factor for tension.
-        bending_factors_yy: Combined adjustment factor for bending about the yy axis.
-        bending_factors_zz: Combined adjustment factor for bending about the zz axis.
-        shear_factors: Combined adjustment factor for shear.
-        compression_factors_yy: Combined adjustment factor for compression about the yy axis.
-        compression_factors_zz: Combined adjustment factor for compression about the zz axis.
-        compression_perp_factors: Combined adjustment factor for compression perpendicular to grain.
-        elastic_modulus_factors: Combined adjustment factor for the modulus of elasticity.
-
-    Returns:
-        A pandas DataFrame containing the DCR results for each force condition.
-
-    Assumptions:
-        - The provided section, element, material and factors are valid and of the correct type.
-        - The forces in 'list_forces' are all valid.
-        - All data is provided in consistent units.
-    """
-
-    if not isinstance(list_elements, list):
-        list_elements = [list_elements]
-
-    if not list_elements:
-        raise ValueError("The 'list_sections' cannot be empty.")
-
-    all_results = []
-    errors = []
-    for element in tqdm(list_elements, desc="Checking for all sections"):
-        print('::::::::::::::::::::::::::::::::::::::::::::::::::')
-        print(f'Calculando para el elemento: {element.name}')
-        print('::::::::::::::::::::::::::::::::::::::::::::::::::')
-        try:
-            dcr_df = check_for_all_sections(
-                list_sections=list_sections,
-                list_elements=element,
-                list_forces=list_forces,
-                material=material,
-                tension_factors=tension_factors,
-                bending_factors_yy=bending_factors_yy,
-                bending_factors_zz=bending_factors_zz,
-                shear_factors=shear_factors,
-                compression_factors_yy=compression_factors_yy,
-                compression_factors_zz=compression_factors_zz,
-                compression_perp_factors=compression_perp_factors,
-                elastic_modulus_factors=elastic_modulus_factors,
-                support_area=support_area
-            )
-
-            all_results.append(dcr_df)
-
-        except Exception as e:
-            error_msg = f"Error processing section '{element.name}': {e}"
-            errors.append(error_msg)
-            print(error_msg)
-
-    if errors:
-        print("\nErrors encountered during processing:")
-        for error in errors:
-            print(error)
-
-    if all_results:
-        return pd.concat(all_results, ignore_index=True)
-    else:
+        tension_factors: TensionAdjustmentFactors,
+        bending_factors_yy: BendingAdjustmentFactors,
+        bending_factors_zz: BendingAdjustmentFactors,
+        shear_factors: ShearAdjustmentFactors,
+        compression_factors_yy: CompressionAdjustmentFactors,
+        compression_factors_zz: CompressionAdjustmentFactors,
+        compression_perp_factors: PerpendicularAdjustmentFactors,
+        elastic_modulus_factors: ElasticModulusAdjustmentFactors,
+        support_area_values: dict,
+) -> pd.DataFrame :
+    if not list_sections or not list_elements or not list_forces :
         return pd.DataFrame()
+
+    results = []
+    for section in list_sections :
+        for element in list_elements :
+            for forces in list_forces :
+
+                section_properties = RectangularSectionProperties(width=section.width, depth=section.depth)
+                wood_calculator = WoodElementCalculator(
+                    tension_factors=tension_factors,
+                    bending_factors_yy=bending_factors_yy,
+                    bending_factors_zz=bending_factors_zz,
+                    shear_factors=shear_factors,
+                    compression_factors_yy=compression_factors_yy,
+                    compression_factors_zz=compression_factors_zz,
+                    compression_perp_factors=compression_perp_factors,
+                    elastic_modulus_factors=elastic_modulus_factors,
+                    material_properties=material,
+                    section_properties=section_properties,
+                )
+
+                support_area = support_area_values.get(element.name, 1.0)
+
+                try :
+                    dcr_tension = abs(forces.axial) / wood_calculator.tension_strength() if forces.axial > 0 else 0
+                except ZeroDivisionError :
+                    dcr_tension = 0
+
+                dcr_bending_yy = abs(forces.moment_yy) / wood_calculator.bending_strength(
+                    "yy") if forces.moment_yy else 0
+                dcr_bending_zz = abs(forces.moment_zz) / wood_calculator.bending_strength(
+                    "zz") if forces.moment_zz else 0
+
+                dcr_biaxial_bending = dcr_bending_yy + dcr_bending_zz
+
+                try :
+                    dcr_shear_y = abs(forces.shear_y) / wood_calculator.shear_strength() if forces.shear_y else 0
+                except ZeroDivisionError :
+                    dcr_shear_y = 0
+
+                try :
+                    dcr_shear_z = abs(forces.shear_z) / wood_calculator.shear_strength() if forces.shear_z else 0
+                except ZeroDivisionError :
+                    dcr_shear_z = 0
+
+                try :
+                    dcr_compression = abs(forces.axial) / wood_calculator.compression_strength(
+                        "yy") if forces.axial < 0 else 0
+                except ZeroDivisionError :
+                    dcr_compression = 0
+
+                try :
+                    max_shear = max(abs(forces.shear_y), abs(forces.shear_z)) # Correct calculation of max_shear
+                    dcr_compression_perp = max_shear / wood_calculator.compression_perp_strength(
+                        support_area) if max_shear > 0 else 0 # Correct use of max_shear and add if condition
+                except ZeroDivisionError :
+                    dcr_compression_perp = 0
+
+                dcr_bending_and_compression = dcr_compression + dcr_biaxial_bending
+
+                results.append({
+                    "member" : element.name,
+                    "section" : section.name,
+                    "force" : forces.name,
+                    "tension (dcr)" : dcr_tension,
+                    "biaxial bending (dcr)" : dcr_biaxial_bending,
+                    "shear y (dcr)" : dcr_shear_y,
+                    "shear z (dcr)" : dcr_shear_z,
+                    "compression (dcr)" : dcr_compression,
+                    "bending and compression (dcr)" : dcr_bending_and_compression,
+                    "compression perpendicular (dcr)" : dcr_compression_perp
+
+                })
+    return pd.DataFrame(results)
 
 
 def filter_and_export_results(
@@ -611,39 +456,6 @@ def filter_and_export_results(
     sort_by: str = None,
     sort_order: Literal["asc", "desc"] = "asc",
 ) -> pd.DataFrame:
-    """
-    Filters a DataFrame based on multiple columns and conditions, then exports the filtered results to an Excel file.
-    It can also sort the filtered data and return the filtered DataFrame.
-
-    Args:
-        results_df: DataFrame containing the results from check_for_all_sections.
-        filters: A dictionary where keys are column names and values are:
-                - For string columns, a string or a list of strings to match exactly
-                - For numerical columns, a dictionary like:
-                    - {"operator": "gt", "threshold": 1.0} for single value filtering
-                    - {"range": {"min": 0.5, "max": 1.5}} for range filtering
-                  where "operator" can be "eq", "gt", "lt", "ge", "le" (equal, greater than, less than,
-                  greater than or equal to, less than or equal to) and "threshold" is the numerical value
-        output_path: The path to save the filtered results as an Excel file. If not provided, defaults to the directory where the script is running.
-        output_filename: The filename to save the filtered results as a Excel file.
-            Defaults to "filtered_results.xlsx"
-        sort_by: The column to sort the DataFrame by.
-        sort_order: The order to sort the DataFrame ("asc" for ascending, "desc" for descending). Defaults to "asc".
-
-    Returns:
-        The filtered and sorted DataFrame.
-
-    Assumptions:
-        - The 'results_df' is a valid pandas DataFrame.
-        - The keys of the 'filters' dictionary are valid column names in 'results_df'.
-        - Values of 'filters' for numeric columns are dictionaries with 'operator' and 'threshold' keys, or 'range' key with 'min' and 'max' keys.
-          The 'operator' key must have one of the supported values "eq", "gt", "lt", "ge", "le".
-          The 'min' and 'max' keys are numeric.
-        - The output_filename is a valid name for a xlsx file
-        - If output_path is not None it must be a string
-        - The column provided for `sort_by` is present in the DataFrame
-
-    """
     if not isinstance(results_df, pd.DataFrame):
         raise TypeError("Input must be a pandas DataFrame.")
     if not isinstance(filters, dict):
@@ -683,7 +495,7 @@ def filter_and_export_results(
 
     filtered_df = results_df.copy()
     for column, condition in filters.items():
-        if isinstance(condition, str):  # String filter
+        if isinstance(condition, str):
             filtered_df = filtered_df[filtered_df[column] == condition]
         elif isinstance(condition, list):
             filtered_df = filtered_df[filtered_df[column].isin(condition)]
@@ -708,7 +520,6 @@ def filter_and_export_results(
         filtered_df = filtered_df.sort_values(by=sort_by, ascending=(sort_order == "asc"))
 
     if output_path is None:
-        # Use the directory where the script is running
         output_path = os.path.join(os.getcwd(), output_filename)
     else:
         output_path = os.path.join(output_path, output_filename)

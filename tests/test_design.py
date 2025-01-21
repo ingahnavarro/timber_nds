@@ -1,4 +1,5 @@
 import pytest
+
 from timber_nds.design import (
     WoodElementCalculator,
     calculate_dcr_for_wood_elements,
@@ -24,8 +25,8 @@ def sample_factors():
     bending_factors_yy = BendingAdjustmentFactors(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
     bending_factors_zz = BendingAdjustmentFactors(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
     shear_factors = ShearAdjustmentFactors(1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
-    compression_factors_yy = CompressionAdjustmentFactors(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
-    compression_factors_zz = CompressionAdjustmentFactors(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
+    compression_factors_yy = CompressionAdjustmentFactors(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
+    compression_factors_zz = CompressionAdjustmentFactors(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
     compression_perp_factors = PerpendicularAdjustmentFactors(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
     elastic_modulus_factors = ElasticModulusAdjustmentFactors(1.0, 1.0, 1.0, 1.0)
     return (
@@ -70,24 +71,24 @@ def sample_element():
 def sample_forces():
     return Forces(
         name="Test Forces",
-        axial=100.0,  # kgf
-        shear_y=50.0,  # kgf
-        shear_z=30.0,  # kgf
-        moment_xx=10.0,  # kgf*cm
-        moment_yy=20.0,  # kgf*cm
-        moment_zz=15.0,  # kgf*cm
+        axial=100.0,
+        shear_y=50.0,
+        shear_z=30.0,
+        moment_xx=10.0,
+        moment_yy=20.0,
+        moment_zz=15.0,
     )
 
 
 @pytest.fixture
 def sample_forces_no_name():
     return Forces(
-        axial=100.0,  # kgf
-        shear_y=50.0,  # kgf
-        shear_z=30.0,  # kgf
-        moment_xx=10.0,  # kgf*cm
-        moment_yy=20.0,  # kgf*cm
-        moment_zz=15.0,  # kgf*cm
+        axial=100.0,
+        shear_y=50.0,
+        shear_z=30.0,
+        moment_xx=10.0,
+        moment_yy=20.0,
+        moment_zz=15.0,
     )
 
 
@@ -132,16 +133,16 @@ class TestWoodElementCalculator:
     def test_tension_strength(self, wood_element_calculator):
         strength = wood_element_calculator.tension_strength()
         assert isinstance(strength, float)
-        assert strength > 0  # Results will be in kgf
+        assert strength > 0
 
     def test_bending_strength(self, wood_element_calculator):
         strength_yy = wood_element_calculator.bending_strength("yy")
         assert isinstance(strength_yy, float)
-        assert strength_yy > 0  # Results will be in kgf*cm
+        assert strength_yy > 0
 
         strength_zz = wood_element_calculator.bending_strength("zz")
         assert isinstance(strength_zz, float)
-        assert strength_zz > 0  # Results will be in kgf*cm
+        assert strength_zz > 0
 
         with pytest.raises(ValueError, match="Invalid direction. Use 'yy' or 'zz'."):
             wood_element_calculator.bending_strength("invalid")
@@ -149,16 +150,16 @@ class TestWoodElementCalculator:
     def test_shear_strength(self, wood_element_calculator):
         strength = wood_element_calculator.shear_strength()
         assert isinstance(strength, float)
-        assert strength > 0  # Results will be in kgf
+        assert strength > 0
 
     def test_compression_strength(self, wood_element_calculator):
         strength_yy = wood_element_calculator.compression_strength("yy")
         assert isinstance(strength_yy, float)
-        assert strength_yy > 0  # Results will be in kgf
+        assert strength_yy > 0
 
         strength_zz = wood_element_calculator.compression_strength("zz")
         assert isinstance(strength_zz, float)
-        assert strength_zz > 0  # Results will be in kgf
+        assert strength_zz > 0
 
         with pytest.raises(ValueError, match="Invalid direction. Use 'yy' or 'zz'."):
             wood_element_calculator.compression_strength("invalid")
@@ -166,7 +167,7 @@ class TestWoodElementCalculator:
     def test_compression_perp_strength(self, wood_element_calculator):
         strength = wood_element_calculator.compression_perp_strength()
         assert isinstance(strength, float)
-        assert strength > 0  # Results will be in kgf
+        assert strength > 0
 
 
 class TestCalculateDcrForWoodElements:
@@ -182,6 +183,7 @@ class TestCalculateDcrForWoodElements:
             compression_factors_zz,
             compression_perp_factors,
             elastic_modulus_factors,
+
         ) = sample_factors
         dcr_results = calculate_dcr_for_wood_elements(
             section=sample_section,
@@ -196,11 +198,12 @@ class TestCalculateDcrForWoodElements:
             compression_factors_zz=compression_factors_zz,
             compression_perp_factors=compression_perp_factors,
             elastic_modulus_factors=elastic_modulus_factors,
+            support_area=1.0
         )
 
         assert isinstance(dcr_results, dict)
         assert all(isinstance(value, (int, float)) for value in dcr_results.values())
-        assert len(dcr_results) == 13
+        assert len(dcr_results) == 15
 
         with pytest.raises(TypeError, match="'section' must be a RectangularSection instance."):
             calculate_dcr_for_wood_elements(
@@ -216,6 +219,7 @@ class TestCalculateDcrForWoodElements:
                 compression_factors_zz=compression_factors_zz,
                 compression_perp_factors=compression_perp_factors,
                 elastic_modulus_factors=elastic_modulus_factors,
+                support_area=1.0
             )
 
         with pytest.raises(TypeError, match="'element' must be a MemberDefinition instance."):
@@ -232,6 +236,7 @@ class TestCalculateDcrForWoodElements:
                 compression_factors_zz=compression_factors_zz,
                 compression_perp_factors=compression_perp_factors,
                 elastic_modulus_factors=elastic_modulus_factors,
+                support_area=1.0
             )
 
         with pytest.raises(TypeError, match="'force' must be a Forces instance."):
@@ -248,6 +253,7 @@ class TestCalculateDcrForWoodElements:
                 compression_factors_zz=compression_factors_zz,
                 compression_perp_factors=compression_perp_factors,
                 elastic_modulus_factors=elastic_modulus_factors,
+                support_area=1.0
             )
         with pytest.raises(TypeError, match="'material' must be a WoodMaterial instance."):
             calculate_dcr_for_wood_elements(
@@ -263,4 +269,5 @@ class TestCalculateDcrForWoodElements:
                 compression_factors_zz=compression_factors_zz,
                 compression_perp_factors=compression_perp_factors,
                 elastic_modulus_factors=elastic_modulus_factors,
+                support_area=1.0
             )
